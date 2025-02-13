@@ -25,14 +25,54 @@
  * Domain Path:       /languages
  */
 
+register_activation_hook( __FILE__, 'Fio_Aspirante_init');
+
+function Fio_Aspirante_init() {
+    global $wpdb;
+    $tabla_aspirante = $wpdb->prefix . 'aspirante';
+    $charset_collate = $wpdb->get_charset_collate();
+    //Prepara la consulta que vamos a lanzar para crear la tabla
+    $query = "CREATE TABLE IF NOT EXISTS  $tabla_aspirante (
+    id mediumint(9) NOT NULL AUTO_INCREMENT,
+    nombres varchar(40) NOT NULL,
+    apellidos varchar(80) NOT NULL,
+    correo varchar(99) NOT NULL,
+    empresa varchar(40) NOT NULL,
+    cargo varchar(3) NOT NULL,
+    vencimiento DATE NOT NULL,
+    identificacion varchar(3) NOT NULL,
+    numero varchar(20) NOT NULL,
+    qr varchar(150) NOT NULL,
+    foto varchar(200) NOT NULL,
+    created_at datetime NOT NULL,
+    UNIQUE(id)
+    ) $charset_collate";
+
+    include_once ABSPATH .'wp-admin/includes/upgrade.php';
+    dbDelta( $query );
+
+}
+
+
+
 add_shortcode( 'fio_plugin_form', 'FIO_Plugin_form');
+
+
+
 function FIO_Plugin_form(){
+
+    global $wpdb;
+    $tabla_aspirante = $wpdb->prefix . 'aspirante';
+    if ( $_POST['nombres'] != '') {
+        $wpdb->insert($tabla_aspirante, array('nombres' => $_POST['nombres']));
+    }
+
     ob_start();
     ?>
     <form action="<?php get_the_permalink(); ?>" method="post" class="cuestionario" >
         <div class="form-input">
-            <label for="nombre">Nombres</label>
-            <input type="text" name="nombre" required="required">
+            <label for="nombres">Nombres</label>
+            <input type="text" name="nombres" required="required">
         </div>
 
         <div class="form-input">
@@ -44,6 +84,7 @@ function FIO_Plugin_form(){
         <!-- Campo de selección desplegable -->
         <label for="tipoDoc">Tipo de documento</label>
         <select id="tipoDoc" name="tipoDoc">
+
             <option value="dni">DNI</option>
             <option value="ce">Carnet Extranj.</option>
             <option value="lm">Libreta militar</option>
@@ -52,7 +93,7 @@ function FIO_Plugin_form(){
 
         <div class="form-input">
             <label for="identidad">Número</label>
-            <input type="number" name="identidad" required="required">
+            <input type="text" name="identidad" required="required">
         </div>
         
         <div class="form-input">
@@ -67,6 +108,13 @@ function FIO_Plugin_form(){
             <option value="adj">Adjunto</option>
         </select>
         </div>
+
+        <div class="form-input">
+            <label for="qr">QR:</label>
+            <input type="text" name="qr" required="required">
+        </div>
+
+
         <div class="form-input">
             <label for="fechaVencimiento">Vencimiento</label>
             <input type="date" name="fechaVencimiento" required="required">
