@@ -9,7 +9,7 @@
  * that starts the plugin.
  *
  * @link              https://https://blackmichi.com/
- * @since             1.0.0
+ * @since             1.1.5
  * @package           FIO_Plugin_form
  *
  * @wordpress-plugin
@@ -25,9 +25,10 @@
  * Domain Path:       /languages
  */
 
-register_activation_hook( __FILE__, 'Fio_Aspirante_init');
+register_activation_hook(__FILE__, 'Fio_Aspirante_init');
 
-function Fio_Aspirante_init() {
+function Fio_Aspirante_init()
+{
     global $wpdb;
     $tabla_aspirante = $wpdb->prefix . 'aspirante';
     $charset_collate = $wpdb->get_charset_collate();
@@ -48,28 +49,74 @@ function Fio_Aspirante_init() {
     UNIQUE(id)
     ) $charset_collate";
 
-    include_once ABSPATH .'wp-admin/includes/upgrade.php';
-    dbDelta( $query );
-
+    include_once ABSPATH . 'wp-admin/includes/upgrade.php';
+    dbDelta($query);
 }
 
 
 
-add_shortcode( 'fio_plugin_form', 'FIO_Plugin_form');
+add_shortcode('fio_plugin_form', 'FIO_Plugin_form');
 
 
 
-function FIO_Plugin_form(){
+function FIO_Plugin_form()
+{
 
     global $wpdb;
-    $tabla_aspirante = $wpdb->prefix . 'aspirante';
-    if ( $_POST['nombres'] != '') {
-        $wpdb->insert($tabla_aspirante, array('nombres' => $_POST['nombres']));
-    }
+
+    if (
+        !empty($_POST)
+        and $_POST['nombres'] != ''
+        and $_POST['apellido'] != ''
+        and is_email($_POST['email'])
+        and $_POST['empresa'] != ''
+        and $_POST['cargo'] != ''
+        and $_POST['fechaVencimiento'] != ''
+        and $_POST['tipoDoc'] != ''
+        and $_POST['identidad'] != ""
+        and $_POST['qr'] != ''
+
+
+    ) {
+
+        $tabla_aspirante = $wpdb->prefix . 'aspirante';
+        
+        $nombres = sanitize_text_field($_POST['nombres']);
+        $apellidos = sanitize_text_field($_POST['apellido']);
+        $correo = sanitize_email($_POST['email']);
+        $empresa = sanitize_text_field($_POST['empresa']);
+        $cargo = sanitize_text_field($_POST['cargo']);
+        $tipoDoc = sanitize_text_field($_POST['tipoDoc']);
+        $identidad = sanitize_text_field($_POST['identidad']);
+        $fechaVencimiento = sanitize_text_field($_POST['fechaVencimiento']);
+        $qr = sanitize_text_field($_POST['qr']);
+        $created_at = date('Y-m-d H:i:s');
+
+        $wpdb->insert(
+            $tabla_aspirante,
+            array(
+                'nombres' => $nombres,
+                'apellidos' => $apellidos,
+                'correo' => $correo,
+                'empresa' => $empresa,
+                'cargo' => $cargo,
+                'vencimiento' => $fechaVencimiento,
+                'identificacion' => $tipoDoc,
+                'numero' => $identidad,
+                'qr' => $qr,
+                'created_at' => $created_at,
+                'foto' => $_POST['imagen'], 
+                
+
+            )
+        );
+    } 
+
+
 
     ob_start();
-    ?>
-    <form action="<?php get_the_permalink(); ?>" method="post" class="cuestionario" >
+?>
+    <form action="<?php get_the_permalink(); ?>" method="post" class="cuestionario">
         <div class="form-input">
             <label for="nombres">Nombres</label>
             <input type="text" name="nombres" required="required">
@@ -81,32 +128,34 @@ function FIO_Plugin_form(){
         </div>
 
         <div class="form-input">
-        <!-- Campo de selección desplegable -->
-        <label for="tipoDoc">Tipo de documento</label>
-        <select id="tipoDoc" name="tipoDoc">
+            <!-- Campo de selección desplegable -->
+            <label for="tipoDoc">Tipo de documento</label>
+            <select id="tipoDoc" name="tipoDoc">
 
-            <option value="dni">DNI</option>
-            <option value="ce">Carnet Extranj.</option>
-            <option value="lm">Libreta militar</option>
-        </select>
+                <option value="0">Seleccione tipo</option>
+                <option value="1">DNI</option>
+                <option value="2">Carnet Extranj.</option>
+                <option value="3">Libreta militar</option>
+            </select>
         </div>
 
         <div class="form-input">
             <label for="identidad">Número</label>
             <input type="text" name="identidad" required="required">
         </div>
-        
+
         <div class="form-input">
-            <label for="emoresa">Empresa</label>
+            <label for="empresa">Empresa</label>
             <input type="text" name="empresa" required="required">
         </div>
         <div class="form-input">
             <label for="cargo">Cargo</label>
             <select id="cargo" name="cargo">
-            <option value="ger">Gerente</option>
-            <option value="ing">Ingeniero</option>
-            <option value="adj">Adjunto</option>
-        </select>
+                <option value="0">Seleccione cargo</option>
+                <option value="1">Gerente</option>
+                <option value="2">Ingeniero</option>
+                <option value="3">Adjunto</option>
+            </select>
         </div>
 
         <div class="form-input">
@@ -121,9 +170,9 @@ function FIO_Plugin_form(){
         </div>
 
         <div class="form-input">
-             <!-- Campo de correo electrónico -->
-        <label for="email">Correo electrónico:</label>
-        <input type="email" id="email" name="email" placeholder="Escribe el correo">
+            <!-- Campo de correo electrónico -->
+            <label for="email">Correo electrónico:</label>
+            <input type="email" id="email" name="email" placeholder="Escribe el correo">
         </div>
 
         <!-- Campo para adjuntar imagen -->
@@ -131,12 +180,12 @@ function FIO_Plugin_form(){
         <input type="file" id="imagen" name="imagen" accept="image/*">
 
         <div class="form-input">
-        <!-- Botón de envío -->
-        <input type="submit" value="Enviar">
+            <!-- Botón de envío -->
+            <input type="submit" value="Enviar">
         </div>
 
     </form>
 
-    <?php
+<?php
     return ob_get_clean();
 }
